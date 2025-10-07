@@ -7,7 +7,7 @@ color: hitam; /* warna teks utama (hitam) */
   width: 300px;
   margin: 50px auto; /* 50px jarak atas/bawah, auto menengah kiri/kanan */
 pandding: 20px;
-  background-color: hitam;
+  background-color: lighblue;
   border-radius: 15px /* membuat sudut menjadi melengkung */
 box-shadow: 0 4px 8px rgba(2,0,0,8); /* efek bayangan */
   text-align: center /* menengah semua teks di dalam kartu */
