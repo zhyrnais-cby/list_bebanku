@@ -3,6 +3,7 @@ body {
 font-family: arial, sans-serif; /* jenis huruf yang bersih dan mudah dibaca */
 color: hitam; /* warna teks utama (hitam) */
 }
+
 .kartu-profil {
   width: 300px;
   margin: 50px auto; /* 50px jarak atas/bawah, auto menengah kiri/kanan */
@@ -12,6 +13,7 @@ pandding: 20px;
 box-shadow: 0 4px 8px rgba(2,0,0,8); /* efek bayangan */
   text-align: center /* menengah semua teks di dalam kartu */
 }
+
 .kartu-profil img {
   width: 150px;
   border-radius: 50%; /* trik untuk membuat gambar persegi menjadi lingkarang sempurna */
