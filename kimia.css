@@ -1,0 +1,63 @@
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f9;
+    color: #333;
+}
+
+header {
+    background-color: #3a75c4; /* Warna Kimia Biru */
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#main-nav {
+    display: flex;
+    justify-content: center;
+    padding: 10px 0;
+    background-color: #c0c0c0;
+}
+
+#main-nav button {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    font-weight: bold;
+    border-radius: 5px;
+}
+
+#main-nav button:hover {
+    background-color: #eaeaea;
+}
+
+main {
+    padding: 20px;
+}
+
+.app-section {
+    background-color: white;
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.answer-btn {
+    padding: 10px 15px;
+    margin: 5px;
+    background-color: #4CAF50; /* Hijau */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.answer-btn:hover {
+    background-color: #45a049;
+}
