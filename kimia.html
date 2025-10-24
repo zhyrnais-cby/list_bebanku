@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimia Seru!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>🔬 Kimia Seru!</h1>
+        <div id="user-info">
+            <span id="profile-name">Pemain</span> | 
+            <span id="level">Lv. 1</span> | 
+            <span id="coins">💰 0</span>
+        </div>
+    </header>
+
+    <main>
+        <nav id="main-nav">
+            <button onclick="showSection('game')">🎮 Permainan</button>
+            <button onclick="showSection('missions')">🎯 Misi</button>
+            <button onclick="showSection('store')">🛍️ Toko</button>
+            <button onclick="showSection('leaderboard')">🏆 Peringkat</button>
+            <button onclick="showSection('profile')">👤 Profil</button>
+        </nav>
+
+        <section id="game-section" class="app-section active">
+            <h2>Permainan: Kuis Senyawa!</h2>
+            <div id="quiz-area">
+                <p>Apa nama senyawa dari formula $\text{H}_2\text{O}$?</p>
+                <button class="answer-btn" data-answer="air">Air</button>
+                <button class="answer-btn" data-answer="asam">Asam</button>
+            </div>
+        </section>
+
+        <section id="missions-section" class="app-section" style="display:none;">
+            <h2>🎯 Misi Harian</h2>
+            <ul id="missions-list">
+                <li>Selesaikan 3 kuis hari ini (Status: 0/3) - Hadiah: 💰 5</li>
+            </ul>
+        </section>
+
+        <section id="store-section" class="app-section" style="display:none;">
+            <h2>🛍️ Toko</h2>
+            <div id="store-items">
+                <div class="store-item">Avatar Baru - Harga: 💰 100</div>
+            </div>
+        </section>
+
+        <section id="leaderboard-section" class="app-section" style="display:none;">
+            <h2>🏆 Peringkat</h2>
+            <ol id="leaderboard-list">
+                <li>1. Pemain Hebat - 500 Poin</li>
+            </ol>
+        </section>
+
+        <section id="profile-section" class="app-section" style="display:none;">
+            <h2>👤 Profil Saya</h2>
+            <p>Total Poin: <span id="profile-points">0</span></p>
+            <p>Item yang Dimiliki: <span id="profile-inventory">Tidak ada</span></p>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
