@@ -1,0 +1,345 @@
+from datetime import datetime, timedelta
+import random
+
+# --- Data Storage Sederhana (Menggunakan dictionary global) ---
+data_pengguna = {
+    "riwayat_haid": [],  # List of tuples: [(start_date, end_date)]
+    "log_harian": [],    # List of dicts: [{"tanggal": date, "mood": mood, "nyeri": nyeri}]
+    "siklus_rata_rata": 28,  # Default, akan diperbarui
+    "durasi_rata_rata": 5    # Default, akan diperbarui
+}
+
+# --- Fungsi Utilitas Tanggal ---
+def input_tanggal(prompt):
+    """Membantu pengguna memasukkan tanggal dalam format YYYY-MM-DD."""
+    while True:
+        try:
+            tanggal_str = input(prompt + " (YYYY-MM-DD): ")
+            # Mengubah string menjadi objek date untuk perhitungan
+            return datetime.strptime(tanggal_str, "%Y-%m-%d").date()
+        except ValueError:
+            print("Format tanggal salah. Harap gunakan YYYY-MM-DD.")
+
+def hitung_rata_rata():
+    """Menghitung rata-rata panjang siklus dan durasi haid dari riwayat."""
+    riwayat = data_pengguna["riwayat_haid"]
+    if len(riwayat) < 1:
+        return # Tidak ada data
+
+    # 1. Hitung Durasi Haid Rata-rata
+    durasi_haid = [(end - start).days + 1 for start, end in riwayat]
+    if durasi_haid:
+        data_pengguna["durasi_rata_rata"] = round(sum(durasi_haid) / len(durasi_haid))
+
+    # 2. Hitung Panjang Siklus Rata-rata (membutuhkan minimal 2 data haid)
+    if len(riwayat) < 2:
+        return
+
+    panjang_siklus = []
+    for i in range(1, len(riwayat)):
+        start_sebelumnya = riwayat[i-1][0]
+        start_sekarang = riwayat[i][0]
+        selisih = (start_sekarang - start_sebelumnya).days
+        panjang_siklus.append(selisih)
+
+    if panjang_siklus:
+        data_pengguna["siklus_rata_rata"] = round(sum(panjang_siklus) / len(panjang_siklus))
+
+# --- Fitur Utama: Input & Prediksi ---
+
+def input_data_haid():
+    """Input tanggal mulai dan berakhir haid."""
+    print("\n--- Input Data Haid Terbaru ---")
+    start_date = input_tanggal("Masukkan tanggal mulai haid")
+    end_date = input_tanggal("Masukkan tanggal berakhir haid")
+
+    if start_date > end_date:
+        print("❌ Kesalahan: Tanggal mulai harus sebelum atau sama dengan tanggal berakhir.")
+        return
+
+    # Menambahkan data dan mengurutkan berdasarkan tanggal mulai
+    data_pengguna["riwayat_haid"].append((start_date, end_date))
+    data_pengguna["riwayat_haid"].sort(key=lambda x: x[0])
+
+    hitung_rata_rata()
+    print("✅ Data haid berhasil dicatat. Rata-rata siklus baru telah dihitung.")
+
+def prediksi_haid_berikutnya():
+    """Prediksi haid berikutnya secara otomatis dan notifikasi."""
+    riwayat = data_pengguna["riwayat_haid"]
+    if not riwayat:
+        print("ℹ️ Tidak ada riwayat haid. Silakan masukkan data haid terlebih dahulu.")
+        return
+
+    # Ambil tanggal mulai haid terakhir
+    last_start_date = riwayat[-1][0]
+    siklus = data_pengguna["siklus_rata_rata"]
+    durasi = data_pengguna["durasi_rata_rata"]
+
+    # Perhitungan Prediksi
+    prediksi_start = last_start_date + timedelta(days=siklus)
+    prediksi_end = prediksi_start + timedelta(days=durasi - 1)
+
+    tanggal_sekarang = datetime.now().date()
+
+    print("\n--- Prediksi Haid Berikutnya ---")
+    print(f"Periode Terakhir: {last_start_date.strftime('%d-%m-%Y')} hingga {riwayat[-1][1].strftime('%d-%m-%Y')}")
+    print(f"Siklus Rata-rata Anda: **{siklus} hari** | Durasi Rata-rata: **{durasi} hari**")
+    print(f"Prediksi Mulai Haid Berikutnya: **{prediksi_start.strftime('%d-%m-%Y')}**")
+    print(f"Prediksi Berakhir Haid: **{prediksi_end.strftime('%d-%m-%Y')}**")
+
+    # Logika Notifikasi/Pengingat (7 hari sebelum)
+    notifikasi_date = prediksi_start - timedelta(days=7)
+
+    if tanggal_sekarang >= notifikasi_date and tanggal_sekarang < prediksi_start:
+        sisa_hari = (prediksi_start - tanggal_sekarang).days
+        print(f"\n🔔 **PENGINGAT PENTING:** Haid diperkirakan akan dimulai dalam **{sisa_hari} hari**!")
+    elif tanggal_sekarang < notifikasi_date:
+        print(f"\nℹ️ Pengingat 7 hari sebelum haid akan muncul sekitar {notifikasi_date.strftime('%d-%m-%Y')}.")
+    else:
+        print("\nℹ️ Saat ini tidak ada pengingat yang perlu ditampilkan.")
+
+    return prediksi_start, durasi
+
+# --- Fitur Log Harian (Mood & Nyeri) ---
+
+def log_harian():
+    """Catatan suasana hati dan tingkat nyeri."""
+    print("\n--- Catat Log Harian ---")
+    tanggal = input_tanggal("Masukkan tanggal log")
+
+    mood_options = {
+        "1": "Merah (Marah/Kesal)",
+        "2": "Biru (Sedih/Cemas)",
+        "3": "Kuning (Senang/Bahagia)",
+        "4": "Hijau (Tenang/Biasa)",
+        "5": "Ungu (Lelah/Lesu)"
+    }
+
+    print("Pilih Suasana Hati Anda (berdasarkan warna):")
+    for key, value in mood_options.items():
+        print(f"{key}. {value}")
+
+    while True:
+        mood_choice = input("Masukkan nomor pilihan suasana hati: ").strip()
+        if mood_choice in mood_options:
+            mood = mood_options[mood_choice]
+            break
+        else:
+            print("Pilihan tidak valid. Harap masukkan nomor yang sesuai.")
+
+    while True:
+        try:
+            nyeri = int(input("Tingkat Nyeri (Skala 1 - 5, 1=Ringan, 5=Parah): "))
+            if 1 <= nyeri <= 5:
+                break
+            else:
+                print("Skala nyeri harus antara 1 sampai 5.")
+        except ValueError:
+            print("Input tidak valid. Harap masukkan angka.")
+
+    data_pengguna["log_harian"].append({
+        "tanggal": tanggal,
+        "mood": mood,
+        "nyeri": nyeri
+    })
+
+    print("✅ Log harian berhasil dicatat.")
+
+    # Memberikan kalimat penyemangat berdasarkan mood dan nyeri
+    print("\n--- Pesan Penyemangat untukmu Hari Ini ---")
+    if "Merah" in mood:
+        print("❤️ Suasana hati sedang merah ya? Wajar kok merasa kesal atau marah. Ingat, emosi ini valid. Coba luangkan waktu sejenak untuk menenangkan diri dengan menarik napas dalam-dalam atau melakukan aktivitas yang kamu suka.")
+    elif "Biru" in mood:
+        print("💙 Hari ini terasa biru? Tidak apa-apa untuk merasa sedih atau cemas. Biarkan perasaan itu mengalir, jangan ditahan. Berbicara dengan seseorang yang kamu percaya atau menulis jurnal bisa membantu.")
+    elif "Kuning" in mood:
+        print("💛 Wah, suasana hati sedang kuning! Senang mendengarnya kamu bahagia. Tetap jaga energi positif ini ya! Bagikan kebahagiaanmu atau lakukan sesuatu yang membuatmu semakin bersemangat.")
+    elif "Hijau" in mood:
+        print("💚 Merasa tenang dan biasa hari ini? Itu bagus! Nikmati ketenangan ini. Ini adalah momen yang baik untuk melakukan hal-hal yang rutin atau sekadar menikmati waktu santai.")
+    elif "Ungu" in mood:
+        print("💜 Suasana hati sedang ungu ya, terasa lelah? Tubuhmu mungkin butuh istirahat. Jangan memaksakan diri. Beri waktu untuk dirimu memulihkan energi. Tidur yang cukup dan nutrisi baik sangat membantu.")
+
+    if nyeri == 1:
+        print("✨ Tingkat nyeri ringan. Bagus! Tetap jaga kondisimu dengan baik.")
+    elif nyeri == 2:
+        print("😊 Nyeri terasa sedikit. Semoga cepat mereda ya! Coba lakukan peregangan ringan atau minum air hangat.")
+    elif nyeri == 3:
+        print("💪 Nyeri terasa sedang. Kamu kuat menghadapinya! Kompres hangat bisa jadi teman baikmu saat ini.")
+    elif nyeri == 4:
+        print("🙏 Nyeri cukup mengganggu. Aku tahu ini tidak nyaman. Cobalah teknik relaksasi atau cari posisi yang paling nyaman untukmu. Jangan ragu untuk beristirahat.")
+    elif nyeri == 5:
+        print("😔 Nyeri terasa parah. Aku turut prihatin kamu harus merasakan ini. Ini adalah saatnya untuk benar-benar memprioritaskan istirahat dan perawatan diri. Jika sangat tidak tertahankan, jangan ragu konsultasi dengan profesional medis.")
+
+
+def tampilkan_log():
+    """Menampilkan semua riwayat haid dan log harian."""
+    print("\n--- Riwayat Haid Tercatat ---")
+    if data_pengguna["riwayat_haid"]:
+        for i, (start, end) in enumerate(data_pengguna["riwayat_haid"]):
+            print(f"[{i+1}] Mulai: {start.strftime('%Y-%m-%d')} | Berakhir: {end.strftime('%Y-%m-%d')} | Durasi: {(end - start).days + 1} hari")
+    else:
+        print("Belum ada riwayat haid yang dicatat.")
+
+    print("\n--- Log Harian (Mood & Nyeri) ---")
+    if data_pengguna["log_harian"]:
+        # Mengurutkan log berdasarkan tanggal
+        sorted_log = sorted(data_pengguna["log_harian"], key=lambda x: x["tanggal"], reverse=True)
+        for log in sorted_log:
+            print(f"🗓️ {log['tanggal'].strftime('%Y-%m-%d')} | Mood: {log['mood']} | Nyeri: {log['nyeri']}/5")
+    else:
+        print("Belum ada log harian yang dicatat.")
+
+# --- Fitur Saran Kesehatan ---
+
+def saran_kesehatan(prediksi_start, durasi):
+    """Memberikan saran makanan dan olahraga ringan berdasarkan fase siklus."""
+    tanggal_sekarang = datetime.now().date()
+
+    # Hitung kapan fase haid terakhir selesai
+    riwayat = data_pengguna["riwayat_haid"]
+    if not riwayat:
+        print("ℹ️ Tidak ada data haid. Tidak dapat memberikan saran yang relevan.")
+        return
+
+    last_end_date = riwayat[-1][1]
+
+    # 1. Sedang Haid (Asumsi: dari last_start_date hingga last_end_date)
+    if tanggal_sekarang >= riwayat[-1][0] and tanggal_sekarang <= last_end_date:
+        fase = "Menstruasi"
+    # 2. Pra-menstruasi (PMS) (Asumsi: 7 hari sebelum prediksi haid berikutnya)
+    elif (prediksi_start - tanggal_sekarang).days <= 7 and (prediksi_start - tanggal_sekarang).days > 0:
+        fase = "Pra-Menstruasi (PMS)"
+    # 3. Folikuler (Asumsi: dari akhir haid hingga ovulasi, sekitar hari ke-14)
+    elif tanggal_sekarang > last_end_date and (prediksi_start - tanggal_sekarang).days > 14:
+        fase = "Folikuler (Fase Energi)"
+    # 4. Ovulasi/Luteal Awal (Asumsi: sekitar 14 hari sebelum haid berikutnya)
+    else:
+        fase = "Luteal/Ovulasi"
+
+    print(f"\n--- Saran untuk Fase: **{fase}** ---")
+
+    if fase == "Menstruasi":
+        print("🍽️ Makanan: Utamakan makanan kaya zat besi (bayam, daging merah, lentil) dan vitamin C (untuk penyerapan zat besi). Minum teh herbal hangat (jahe, kamomil) untuk meredakan kram.")
+        print("🤸 Olahraga: Prioritaskan istirahat. Jika harus bergerak, pilih gerakan ringan seperti peregangan lembut, yoga restoratif, atau jalan kaki singkat.")
+    elif fase == "Pra-Menstruasi (PMS)":
+        print("🍽️ Makanan: Tingkatkan magnesium (pisang, cokelat hitam, alpukat) dan vitamin B6 (kentang, gandum utuh) untuk mengurangi kembung dan memperbaiki suasana hati. Batasi kafein dan garam.")
+        print("🤸 Olahraga: Latihan intensitas sedang seperti jogging ringan atau berenang. Yoga sangat baik untuk meredakan kecemasan dan ketegangan.")
+    elif fase == "Folikuler (Fase Energi)":
+        print("🍽️ Makanan: Fase ini adalah waktu yang tepat untuk nutrisi makro yang seimbang. Protein dan karbohidrat kompleks (gandum, nasi merah) untuk membangun kembali energi.")
+        print("🤸 Olahraga: Energi Anda tinggi! Latihan intensitas tinggi (HIIT, angkat beban berat, lari jarak jauh) dapat dilakukan.")
+    elif fase == "Luteal/Ovulasi":
+        print("🍽️ Makanan: Fokus pada serat (sayuran, biji-bijian) dan cairan untuk menjaga pencernaan lancar. Protein tetap penting untuk menopang energi.")
+        print("🤸 Olahraga: Latihan kekuatan dan kardio intensitas sedang. Turunkan sedikit intensitas saat mendekati fase PMS.")
+
+
+# --- Fitur Chatbot "Teman Haid" ---
+
+def chatbot_teman_haid():
+    """Chatbot sederhana untuk memberi semangat dan dukungan."""
+
+    sambutan = [
+        "Hai! Aku Teman Haidmu. Ingat, kamu luar biasa kuat! Ada yang bisa kubantu hari ini?",
+        "Selamat datang! Aku siap mendengarkan semua yang kamu rasakan. Bagaimana kabarmu?",
+        "Halo! Kamu boleh berbagi apa pun, aku di sini untuk menyemangatimu. 😊"
+    ]
+
+    respons_dukungan = [
+        "Aku turut prihatin. Ingat, hari buruk tidak berarti hidup buruk. Ambil napas dalam-dalam. Kamu pantas mendapatkan istirahat.",
+        "Ini pasti tidak nyaman. Coba kompres hangat di perutmu dan dengarkan musik yang menenangkan. Aku mengirimkan pelukan virtual! 🤗",
+        "Kadang-kadang, yang kita butuhkan hanyalah waktu untuk diri sendiri. Beri dirimu izin untuk bersantai tanpa rasa bersalah.",
+        "Ingatlah betapa kuatnya kamu melalui siklus ini setiap bulannya. Kamu pejuang!"
+    ]
+
+    respons_semangat = [
+        "Yes, kamu pasti bisa! Tetap fokus pada hal-hal kecil yang membuatmu bahagia.",
+        "Semangat terus! Jangan lupa minum air putih dan jaga pola makanmu.",
+        "Aku bangga padamu karena sudah bertahan sampai hari ini. Kamu hebat!"
+    ]
+
+    print("\n--- Teman Haid (Chatbot Dukungan) ---")
+    print("Teman Haid: " + random.choice(sambutan))
+
+    while True:
+        pesan = input("Anda: ").lower().strip()
+
+        if any(kata in pesan for kata in ["keluar", "bye", "cukup", "akhiri"]):
+            print("Teman Haid: Sampai jumpa! Jaga dirimu baik-baik, ya. Ingat, istirahat itu penting! ❤️")
+            break
+        elif any(kata in pesan for kata in ["lanjut", "ya", "terus"]):
+             print("Teman Haid: Oke, apa lagi yang ingin kamu ceritakan atau tanyakan?")
+        elif any(kata in pesan for kata in ["sakit", "nyeri", "kram", "tidak enak badan"]):
+            print("Teman Haid: " + random.choice(respons_dukungan) + " Jangan lupa catat tingkat nyerimu di menu Log Harian, ya.")
+        elif any(kata in pesan for kata in ["sedih", "kesal", "marah", "cemas"]):
+            print("Teman Haid: " + random.choice(respons_dukungan) + " Fluktuasi mood itu normal di fase tertentu. Coba tonton film ringan atau membaca buku sebentar.")
+        elif any(kata in pesan for kata in ["semangat", "terima kasih", "makasih", "ok"]):
+            print("Teman Haid: " + random.choice(respons_semangat))
+        elif any(kata in pesan for kata in ["makan", "lapar", "masakan"]):
+            print("Teman Haid: Coba cek menu Saran Kesehatan untuk ide makanan yang cocok dengan fasemu saat ini! Jangan lewatkan nutrisi.")
+        elif any(kata in pesan for kata in ["kapan haid", "prediksi"]):
+            print("Teman Haid: Untuk melihat prediksiku, silakan pilih Menu 2. Aku akan memberikan tanggal perkiraan berdasarkan riwayatmu.")
+        else:
+            print("Teman Haid: Aku mengerti. Kadang kata-kata tidak cukup. Ingat, aku di sini. Coba saja catat perasaanmu di Log Harian.")
+
+# --- Menu Utama Aplikasi ---
+def menu_utama():
+    """Fungsi utama untuk menjalankan aplikasi kalender haid."""
+    print("===================================================")
+    print("        SELAMAT DATANG DI KALENDER HAID PINTAR     ")
+    print("===================================================")
+
+    # Inisialisasi awal, panggil prediksi untuk mendapatkan informasi terkini
+    prediksi_saat_ini, durasi_saat_ini = (None, None)
+    if data_pengguna["riwayat_haid"]:
+        try:
+            prediksi_saat_ini, durasi_saat_ini = prediksi_haid_berikutnya()
+        except TypeError:
+            # Jika hanya ada 1 data riwayat, prediksi_haid_berikutnya mungkin mengembalikan None
+            pass
+
+    while True:
+        print("\n----------------------------------")
+        print("Pilih Menu:")
+        print("1. 🩸 Masukkan Data Haid Baru")
+        print("2. 🗓️ Prediksi Haid & Notifikasi")
+        print("3. 📝 Catat Log Harian (Mood & Nyeri)")
+        print("4. 📖 Lihat Riwayat & Semua Log")
+        print("5. 💪 Saran Makanan & Olahraga Sehat")
+        print("6. 💬 Teman Haid (Chatbot Penyemangat)")
+        print("7. 🚪 Keluar Aplikasi")
+        print("----------------------------------")
+
+        pilihan = input("Masukkan nomor pilihan: ")
+
+        if pilihan == '1':
+            input_data_haid()
+        elif pilihan == '2':
+            prediksi_saat_ini, durasi_saat_ini = prediksi_haid_berikutnya()
+        elif pilihan == '3':
+            log_harian()
+        elif pilihan == '4':
+            tampilkan_log()
+        elif pilihan == '5':
+            # Pastikan ada data prediksi sebelum memberi saran
+            if not data_pengguna["riwayat_haid"]:
+                print("⚠️ Masukkan data haid minimal satu kali untuk mendapatkan saran kesehatan yang relevan.")
+                continue
+
+            # Hitung ulang prediksi untuk memastikan saran berdasarkan data terkini
+            if len(data_pengguna["riwayat_haid"]) >= 1:
+                last_start_date = data_pengguna["riwayat_haid"][-1][0]
+                prediksi_start = last_start_date + timedelta(days=data_pengguna["siklus_rata_rata"])
+                durasi = data_pengguna["durasi_rata_rata"]
+                saran_kesehatan(prediksi_start, durasi)
+            else:
+                 print("⚠️ Masukkan data haid minimal satu kali untuk mendapatkan saran kesehatan yang relevan.")
+        elif pilihan == '6':
+            chatbot_teman_haid()
+        elif pilihan == '7':
+            print("\nTerima kasih telah menggunakan Kalender Haid Pintar. Sampai jumpa!")
+            break
+        else:
+            print("Pilihan tidak valid. Silakan masukkan angka antara 1-7.")
+
+# Memulai aplikasi
+if __name__ == "__main__":
+    menu_utama()
